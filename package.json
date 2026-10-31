@@ -1,0 +1,17 @@
+{
+  "name": "kolkata-fish-mutton-more",
+  "version": "1.0.0",
+  "description": "Kolkata Fish, Mutton & More - Android app wrapper (Capacitor)",
+  "scripts": {
+    "android:add": "npx cap add android",
+    "android:sync": "npx cap sync android",
+    "android:open": "npx cap open android"
+  },
+  "dependencies": {
+    "@capacitor/android": "^6.1.2",
+    "@capacitor/core": "^6.1.2"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "^6.1.2"
+  }
+}

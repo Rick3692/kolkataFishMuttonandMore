@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Your Cart — Kolkata Fish, Mutton &amp; More</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@500;600;700&family=Karla:wght@400;500;700&family=Noto+Serif+Bengali:wght@500;600;700&family=Noto+Sans+Bengali:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#A31621">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+</head>
+<body>
+
+<header class="site-header">
+  <div class="bar">
+    <a class="logo" href="index.html"><span class="mark">Kolkata Fish, Mutton &amp; More</span><span class="sub" data-i18n="brand_tagline">FRESH BAZAAR, DELIVERED</span></a>
+    <nav class="main-nav">
+      <a href="fish.html" data-i18n="nav_fish">Fish Market</a>
+      <a href="meat.html" data-i18n="nav_meat">Mutton &amp; Chicken</a>
+      <a href="grocery.html" data-i18n="nav_grocery">Bengali Grocery</a>
+      <a href="vegetables.html" data-i18n="nav_vegetables">Vegetables</a>
+      <a href="sweets.html" data-i18n="nav_sweets">Bengali Sweets</a>
+      <a href="pooja.html" data-i18n="nav_pooja">Puja Items</a>
+      <a href="achar.html" data-i18n="nav_achar">Achar &amp; Hajmi</a>
+      <a href="about.html" data-i18n="nav_about">About</a>
+      <a href="contact.html" data-i18n="nav_contact">Contact</a>
+    </nav>
+    <div class="header-actions">
+      <div data-lang-switch-slot></div>
+      <a class="login-pill" href="login.html" data-i18n="nav_login">Login</a>
+      <a class="cart-btn" href="cart.html"><span data-i18n="nav_cart">Cart</span> <span class="cart-badge" style="display:none;">0</span></a>
+    </div>
+  </div>
+</header>
+
+<section class="page-hero">
+  <div class="wrap"><h1 data-i18n="cart_title">Your cart</h1><p style="color:var(--ink-soft);" data-i18n="cart_sub">Review your order, then send it to us on WhatsApp.</p></div>
+</section>
+
+<section class="content">
+  <div class="wrap" style="max-width:900px;">
+    <div id="cart-area"></div>
+    <div class="two-col" style="margin-top:30px;" id="checkout-area"></div>
+  </div>
+</section>
+
+<footer class="site-footer">
+  <div class="wrap">
+    <div><strong style="color:#fff;font-family:'Fraunces',serif;">Kolkata Fish, Mutton &amp; More</strong></div>
+    <div><a href="about.html" data-i18n="nav_about">About</a> · <a href="contact.html" data-i18n="nav_contact">Contact</a> · <a href="admin.html" data-i18n="nav_admin">Admin</a></div>
+  </div>
+</footer>
+
+<script src="data/catalog.js"></script>
+<script src="js/store.js"></script>
+<script src="js/i18n.js"></script>
+<script src="js/whatsapp.js"></script>
+<script src="js/main.js"></script>
+<script>
+function renderCart(){
+  const cart = getCart();
+  const area = document.getElementById("cart-area");
+  const checkoutArea = document.getElementById("checkout-area");
+
+  if(cart.length === 0){
+    area.innerHTML = `<div class="cart-empty">${t("cart_empty")} <a href="fish.html">${t("cart_start_link")}</a></div>`;
+    checkoutArea.innerHTML = "";
+    return;
+  }
+
+  let rows = "";
+  cart.forEach(c=>{
+    rows += `<tr>
+      <td>${pname(c)}</td>
+      <td>${c.qty} ${c.unit}</td>
+      <td>${fmtMoney(c.price)}</td>
+      <td>${fmtMoney(c.price*c.qty)}</td>
+      <td><button class="remove-link" data-id="${c.id}">${t("remove_btn")}</button></td>
+    </tr>`;
+  });
+
+  area.innerHTML = `
+    <table class="cart-table">
+      <thead><tr><th>${t("th_item")}</th><th>${t("th_qty")}</th><th>${t("th_price")}</th><th>${t("th_subtotal")}</th><th></th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table>
+    <div class="totals-row"><span>${t("total_label")}</span><span>${fmtMoney(cartTotal())}</span></div>
+  `;
+
+  area.querySelectorAll(".remove-link").forEach(btn=>{
+    btn.addEventListener("click", ()=>{
+      removeFromCart(btn.dataset.id);
+      renderCart();
+    });
+  });
+
+  const customer = getCustomer() || {};
+  checkoutArea.innerHTML = `
+    <div>
+      <h2>${t("delivery_details_heading")}</h2>
+      <form class="stack" id="checkout-form">
+        <div>
+          <label>${t("label_name")}</label>
+          <input type="text" id="c-name" value="${customer.name||""}" required>
+        </div>
+        <div>
+          <label>${t("label_whatsapp_number")}</label>
+          <input type="tel" id="c-phone" value="${customer.phone||""}" placeholder="91XXXXXXXXXX" required>
+        </div>
+        <div>
+          <label>${t("label_address")}</label>
+          <textarea id="c-address" rows="3">${customer.address||""}</textarea>
+        </div>
+        <div>
+          <label>${t("label_notes")}</label>
+          <textarea id="c-notes" rows="2" placeholder="${t("notes_placeholder")}"></textarea>
+        </div>
+        <button class="btn whatsapp" type="submit">${t("submit_send_order")}</button>
+      </form>
+    </div>
+    <div>
+      <h2>${t("how_it_works_heading")}</h2>
+      <p class="notice info">${t("how_it_works_body")}</p>
+    </div>
+  `;
+
+  document.getElementById("checkout-form").addEventListener("submit", (e)=>{
+    e.preventDefault();
+    const name = document.getElementById("c-name").value.trim();
+    const phone = document.getElementById("c-phone").value.trim();
+    const address = document.getElementById("c-address").value.trim();
+    const notes = document.getElementById("c-notes").value.trim();
+    if(!name || !phone){ showToast(t("missing_fields_toast")); return; }
+
+    saveCustomer({name, phone, address});
+
+    const order = {
+      id: "KFM" + Date.now().toString().slice(-8),
+      createdAt: new Date().toISOString(),
+      customer: {name, phone, address},
+      items: getCart(),
+      total: cartTotal(),
+      notes,
+      status: "New"
+    };
+    addOrder(order);
+    sendOrderToStore(order);
+    clearCart();
+    showToast(t("order_sent_toast"));
+    setTimeout(()=>{ window.location.href = "index.html"; }, 1500);
+  });
+}
+renderCart();
+document.addEventListener("kfm-lang-changed", renderCart);
+</script>
+<script>
+if("serviceWorker" in navigator){
+  window.addEventListener("load", ()=>{
+    navigator.serviceWorker.register("service-worker.js").catch(()=>{});
+  });
+}
+</script>
+</body>
+</html>

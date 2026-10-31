@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Contact — Kolkata Fish, Mutton &amp; More</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@500;600;700&family=Karla:wght@400;500;700&family=Noto+Serif+Bengali:wght@500;600;700&family=Noto+Sans+Bengali:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#A31621">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+</head>
+<body>
+
+<header class="site-header">
+  <div class="bar">
+    <a class="logo" href="index.html"><span class="mark">Kolkata Fish, Mutton &amp; More</span><span class="sub" data-i18n="brand_tagline">FRESH BAZAAR, DELIVERED</span></a>
+    <nav class="main-nav">
+      <a href="fish.html" data-i18n="nav_fish">Fish Market</a>
+      <a href="meat.html" data-i18n="nav_meat">Mutton &amp; Chicken</a>
+      <a href="grocery.html" data-i18n="nav_grocery">Bengali Grocery</a>
+      <a href="vegetables.html" data-i18n="nav_vegetables">Vegetables</a>
+      <a href="sweets.html" data-i18n="nav_sweets">Bengali Sweets</a>
+      <a href="pooja.html" data-i18n="nav_pooja">Puja Items</a>
+      <a href="achar.html" data-i18n="nav_achar">Achar &amp; Hajmi</a>
+      <a href="about.html" data-i18n="nav_about">About</a>
+      <a href="contact.html" class="active" data-i18n="nav_contact">Contact</a>
+    </nav>
+    <div class="header-actions">
+      <div data-lang-switch-slot></div>
+      <a class="login-pill" href="login.html" data-i18n="nav_login">Login</a>
+      <a class="cart-btn" href="cart.html"><span data-i18n="nav_cart">Cart</span> <span class="cart-badge" style="display:none;">0</span></a>
+    </div>
+  </div>
+</header>
+
+<section class="page-hero"><div class="wrap"><h1 data-i18n="contact_title">Contact us</h1></div></section>
+
+<section class="content">
+  <div class="wrap two-col">
+    <div>
+      <h2 data-i18n="contact_whatsapp_heading">Reach us on WhatsApp</h2>
+      <p data-i18n="contact_whatsapp_body">Fastest way to reach us — questions, bulk orders, or changes to an order already placed.</p>
+      <p><a class="btn whatsapp" id="wa-contact-btn" href="#" target="_blank" data-i18n="contact_whatsapp_btn">Message us on WhatsApp</a></p>
+      <h2 data-i18n="contact_visit_heading">Visit / contact details</h2>
+      <p id="contact-address"></p>
+      <p id="contact-phone"></p>
+      <p id="contact-email"></p>
+      <p id="contact-hours"></p>
+    </div>
+    <div>
+      <h2 data-i18n="contact_form_heading">Send a message</h2>
+      <form class="stack" id="contact-form">
+        <div><label data-i18n="label_name">Your name</label><input type="text" id="ct-name" required></div>
+        <div><label data-i18n="label_whatsapp_number">Your WhatsApp number</label><input type="tel" id="ct-phone" placeholder="91XXXXXXXXXX" required></div>
+        <div><label data-i18n="label_message">Message</label><textarea id="ct-message" rows="4" required></textarea></div>
+        <button class="btn whatsapp" type="submit" data-i18n="send_via_whatsapp_btn">Send via WhatsApp →</button>
+      </form>
+    </div>
+  </div>
+</section>
+
+<footer class="site-footer">
+  <div class="wrap">
+    <div><strong style="color:#fff;font-family:'Fraunces',serif;">Kolkata Fish, Mutton &amp; More</strong></div>
+    <div><a href="about.html" data-i18n="nav_about">About</a> · <a href="contact.html" data-i18n="nav_contact">Contact</a> · <a href="admin.html" data-i18n="nav_admin">Admin</a></div>
+  </div>
+</footer>
+
+<script src="data/catalog.js"></script>
+<script src="js/store.js"></script>
+<script src="js/i18n.js"></script>
+<script src="js/whatsapp.js"></script>
+<script src="js/main.js"></script>
+<script>
+function renderContactDynamic(){
+  const settings = getSettings();
+  document.getElementById("contact-address").textContent = settings.address;
+  document.getElementById("contact-phone").textContent = t("contact_phone_label") + ": " + settings.whatsappNumber.replace(/^91/, "+91 ");
+  document.getElementById("contact-email").textContent = t("email_label") + ": " + settings.email;
+  document.getElementById("contact-hours").textContent = t("contact_hours_prefix") + " " + settings.openHours;
+  document.getElementById("wa-contact-btn").href = waLink(settings.whatsappNumber, "Hi, I have a question about my order.");
+}
+renderContactDynamic();
+document.addEventListener("kfm-lang-changed", renderContactDynamic);
+
+document.getElementById("contact-form").addEventListener("submit",(e)=>{
+  e.preventDefault();
+  const name = document.getElementById("ct-name").value.trim();
+  const phone = document.getElementById("ct-phone").value.trim();
+  const msg = document.getElementById("ct-message").value.trim();
+  const text = `Message from website\nName: ${name}\nPhone: ${phone}\n\n${msg}`;
+  window.open(waLink(getSettings().whatsappNumber, text), "_blank");
+});
+</script>
+<script>
+if("serviceWorker" in navigator){
+  window.addEventListener("load", ()=>{
+    navigator.serviceWorker.register("service-worker.js").catch(()=>{});
+  });
+}
+</script>
+</body>
+</html>

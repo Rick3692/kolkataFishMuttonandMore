@@ -1,0 +1,9 @@
+{
+  "appId": "com.kolkatafishmuttonmore.app",
+  "appName": "Kolkata Fish, Mutton & More",
+  "webDir": ".",
+  "bundledWebRuntime": false,
+  "android": {
+    "allowMixedContent": true
+  }
+}

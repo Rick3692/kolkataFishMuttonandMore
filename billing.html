@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Billing — Kolkata Fish, Mutton &amp; More</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@500;600;700&family=Karla:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="css/billing.css">
+<!-- SheetJS (free): Excel export of bills -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style id="page-style"></style>
+</head>
+<body class="billing-body">
+
+<!-- ============ SIGN-IN (same password as Admin) ============ -->
+<div class="login-shell" id="gate">
+  <div class="login-box">
+    <h2 style="margin-bottom:4px;">Billing counter</h2>
+    <p style="color:var(--ink-soft);font-size:.85rem;margin-bottom:18px;">Kolkata Fish, Mutton &amp; More — sign in with the admin password</p>
+    <form class="stack" id="gate-form">
+      <div><label>Password</label><input type="password" id="gate-pass" required autofocus></div>
+      <button class="btn" type="submit">Open billing</button>
+    </form>
+  </div>
+</div>
+
+<div id="app" class="hide">
+
+  <header class="bill-top">
+    <div class="bt-brand">🧾 <strong>KFM Billing</strong></div>
+    <nav class="bill-tabs">
+      <button data-tab="tab-new" class="active">New bill</button>
+      <button data-tab="tab-orders">Web orders <span class="badge" id="orders-badge">0</span></button>
+      <button data-tab="tab-reports">Bills &amp; reports</button>
+      <button data-tab="tab-setup">Setup</button>
+    </nav>
+    <div class="bt-right">
+      <button class="chip-btn" id="held-btn" type="button">Held <span class="badge" id="held-badge">0</span></button>
+      <a href="admin.html" target="_blank">Admin ↗</a>
+      <a href="index.html" target="_blank">Shop ↗</a>
+      <a href="#" id="logout">Log out</a>
+    </div>
+  </header>
+
+  <main class="bill-main">
+
+    <!-- =============== NEW BILL =============== -->
+    <section class="tab active" id="tab-new">
+      <div class="pos-grid">
+
+        <div class="pos-left">
+          <div class="search-row">
+            <input type="search" id="item-search" placeholder="Search item… (F2)  Enter adds the first match" autocomplete="off">
+            <button class="btn secondary small" id="custom-btn" type="button">+ Custom item</button>
+          </div>
+          <div class="chips" id="chips"></div>
+          <div class="muted small" id="item-count"></div>
+          <div class="item-grid" id="item-grid"></div>
+        </div>
+
+        <div class="pos-right">
+          <div class="bill-card">
+            <div class="cust-row">
+              <input id="c-name" list="cust-list" placeholder="Customer name (optional)">
+              <input id="c-phone" inputmode="tel" placeholder="Phone / WhatsApp">
+              <datalist id="cust-list"></datalist>
+            </div>
+            <div id="order-tag" class="order-tag hide"></div>
+
+            <div class="lines-wrap">
+              <table class="lines">
+                <thead><tr><th>Item</th><th>Qty</th><th>Rate ₹</th><th class="r">Amount</th><th></th></tr></thead>
+                <tbody id="lines"></tbody>
+              </table>
+            </div>
+
+            <div class="totals">
+              <div class="trow"><span>Subtotal</span><span id="t-sub">₹0.00</span></div>
+              <div class="trow disc-row">
+                <span>Discount
+                  <select id="disc-type"><option value="amt">₹</option><option value="pct">%</option></select>
+                  <input id="disc-val" inputmode="decimal" placeholder="0">
+                </span><span id="t-disc">−₹0.00</span>
+              </div>
+              <div class="trow hide" id="tax-row"><span id="tax-label">GST</span><span id="t-tax">₹0.00</span></div>
+              <div class="trow muted hide" id="round-row"><span>Round off</span><span id="t-round">₹0.00</span></div>
+              <div class="grand"><span>TOTAL</span><span id="t-total">₹0.00</span></div>
+            </div>
+
+            <div class="pay-box">
+              <div class="pay-modes" id="pay-modes">
+                <button type="button" class="active" data-m="Cash">Cash</button>
+                <button type="button" data-m="UPI">UPI</button>
+                <button type="button" data-m="Card">Card</button>
+                <button type="button" data-m="Credit">Credit</button>
+              </div>
+              <div class="pay-row">
+                <label>Received ₹ <input id="received" inputmode="decimal" placeholder="full amount"></label>
+                <div class="change" id="change"></div>
+              </div>
+              <input id="notes" placeholder="Note on bill (optional)">
+            </div>
+
+            <div class="actions">
+              <button class="btn big" id="save-print" type="button">Save &amp; print  <small>Ctrl+Enter</small></button>
+              <button class="btn secondary" id="save-only" type="button">Save</button>
+              <button class="btn secondary" id="hold-btn" type="button">Hold</button>
+              <button class="btn secondary danger-o" id="clear-btn" type="button">Clear</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- =============== WEB ORDERS =============== -->
+    <section class="tab" id="tab-orders">
+      <div class="panel-head">
+        <h2>Orders from the website</h2>
+        <label class="small"><input type="checkbox" id="orders-all"> show billed / cancelled too</label>
+      </div>
+      <p class="muted small">Orders placed from <b>this device's</b> browser (orders from customers' own phones arrive on WhatsApp). Load one into a bill, adjust the actual weights and rates at the counter, then save — the order is marked <b>Billed</b>.</p>
+      <div id="orders-list" class="cards"></div>
+    </section>
+
+    <!-- =============== REPORTS =============== -->
+    <section class="tab" id="tab-reports">
+      <div class="panel-head">
+        <h2>Bills &amp; reports</h2>
+        <div class="range">
+          <button class="chip-btn" data-r="today">Today</button>
+          <button class="chip-btn" data-r="yesterday">Yesterday</button>
+          <button class="chip-btn" data-r="month">This month</button>
+          <button class="chip-btn" data-r="all">All</button>
+          <input type="date" id="rf-from"> <span>to</span> <input type="date" id="rf-to">
+          <button class="btn small" id="export-xlsx" type="button">Export Excel</button>
+        </div>
+      </div>
+      <div class="stat-row" id="r-stats"></div>
+
+      <div class="two">
+        <div class="bill-card"><h3>Sales by payment mode</h3><table class="mini" id="r-modes"></table></div>
+        <div class="bill-card"><h3>Top items</h3><table class="mini" id="r-top"></table></div>
+      </div>
+
+      <div class="bill-card" id="dues-card"><h3>Pending dues</h3><table class="mini" id="r-dues"></table></div>
+
+      <div class="bill-card">
+        <h3>All bills</h3>
+        <div class="table-scroll">
+          <table class="mini" id="r-bills"></table>
+        </div>
+      </div>
+    </section>
+
+    <!-- =============== SETUP =============== -->
+    <section class="tab" id="tab-setup">
+      <div class="panel-head"><h2>Bill setup</h2></div>
+      <div class="two">
+        <div class="bill-card">
+          <h3>Receipt</h3>
+          <form class="stack" id="setup-form" style="max-width:none">
+            <div><label>Tax name</label><input id="s-taxlabel" placeholder="GST"></div>
+            <div><label>Tax % added to every bill (0 = none)</label><input id="s-tax" inputmode="decimal" placeholder="0"></div>
+            <div><label>GSTIN / licence no. (printed on bill, optional)</label><input id="s-gstin"></div>
+            <div><label>UPI ID (printed on bill, optional)</label><input id="s-upi" placeholder="name@bank"></div>
+            <div><label>Paper</label>
+              <select id="s-paper"><option value="80">Thermal roll 80 mm</option><option value="A4">A4 sheet</option></select></div>
+            <div><label>Footer message</label><textarea id="s-footer" rows="3"></textarea></div>
+            <button class="btn" type="submit">Save setup</button>
+          </form>
+          <p class="muted small" style="margin-top:10px">Shop name, address, phone and email on the bill come from <b>Admin → Settings</b>. Fresh fish and meat are normally GST-exempt, so tax is off by default — check rates for your other items with your accountant.</p>
+        </div>
+        <div class="bill-card">
+          <h3>Backup</h3>
+          <p class="muted small">Bills are stored in this browser. Download a backup file regularly (and before clearing browser data).</p>
+          <p><button class="btn secondary" id="backup-btn" type="button">Download backup (.json)</button>
+          <label class="btn secondary" style="cursor:pointer">Restore backup<input type="file" id="restore-input" accept=".json" style="display:none"></label></p>
+          <hr class="sep">
+          <h3>Start fresh</h3>
+          <p class="muted small">Removes all saved bills and the bill numbering — useful after trying the app out. Cannot be undone.</p>
+          <button class="btn danger-o secondary" id="wipe-btn" type="button">Delete all bills</button>
+        </div>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<!-- ============ Modals ============ -->
+<div class="modal hide" id="receipt-modal">
+  <div class="modal-box">
+    <div id="receipt-view"></div>
+    <div class="modal-actions">
+      <button class="btn" id="m-print" type="button">Print</button>
+      <button class="btn whatsapp" id="m-wa" type="button">Send on WhatsApp</button>
+      <button class="btn secondary" id="m-close" type="button">Close</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal hide" id="held-modal">
+  <div class="modal-box">
+    <h3>Held bills</h3>
+    <div id="held-list"></div>
+    <div class="modal-actions"><button class="btn secondary" id="held-close" type="button">Close</button></div>
+  </div>
+</div>
+
+<div class="modal hide" id="custom-modal">
+  <div class="modal-box small-box">
+    <h3>Custom item</h3>
+    <form class="stack" id="custom-form" style="max-width:none">
+      <div><label>Item name</label><input id="ci-name" required></div>
+      <div class="two-in"><div><label>Qty</label><input id="ci-qty" inputmode="decimal" value="1" required></div>
+      <div><label>Unit</label><input id="ci-unit" value="pc"></div></div>
+      <div><label>Rate ₹</label><input id="ci-rate" inputmode="decimal" required></div>
+      <div class="modal-actions"><button class="btn" type="submit">Add to bill</button><button class="btn secondary" type="button" id="ci-cancel">Cancel</button></div>
+    </form>
+  </div>
+</div>
+
+<div id="print-area"></div>
+
+<script src="data/catalog.js"></script>
+<script src="js/store.js"></script>
+<script src="js/whatsapp.js"></script>
+<script src="js/main.js"></script>
+<script src="js/billing.js"></script>
+</body>
+</html>

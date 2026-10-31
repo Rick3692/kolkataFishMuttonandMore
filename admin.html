@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin — Kolkata Fish, Mutton &amp; More</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@500;600;700&family=Karla:wght@400;500;700&family=Noto+Serif+Bengali:wght@500;600;700&family=Noto+Sans+Bengali:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#A31621">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<!-- SheetJS: reads/writes real .xlsx Excel files, entirely in the browser, free -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+</head>
+<body>
+
+<!-- ============ LOGIN ============ -->
+<div class="login-shell" id="admin-login-shell">
+  <div class="login-box">
+    <h2 style="margin-bottom:4px;">Kolkata Fish, Mutton &amp; More</h2>
+    <p style="color:var(--ink-soft);font-size:.85rem;margin-bottom:18px;">Admin sign-in</p>
+    <form class="stack" id="admin-login-form">
+      <div><label>Password</label><input type="password" id="admin-pass" required autofocus></div>
+      <button class="btn" type="submit">Sign in</button>
+      <p style="font-size:.75rem;color:var(--ink-soft);">Default password: <code>kolkata123</code> — change it under Settings after logging in.</p>
+    </form>
+  </div>
+</div>
+
+<!-- ============ DASHBOARD ============ -->
+<div class="admin-shell hide" id="admin-shell">
+  <aside class="admin-side">
+    <a class="logo2" href="index.html">Kolkata FMM</a>
+    <nav>
+      <a data-tab="tab-products" class="active">Products</a>
+      <a data-tab="tab-orders">Today's Orders</a>
+      <a data-tab="tab-history">Order History</a>
+      <a data-tab="tab-settings">Settings</a>
+      <a href="billing.html" target="_blank" style="color:#F4EAD2;font-weight:700;">🧾 Billing (POS) ↗</a>
+      <a id="admin-view-site" href="index.html" target="_blank">View site ↗</a>
+      <a id="admin-logout" style="margin-top:10px;color:#C98A8A;">Log out</a>
+    </nav>
+  </aside>
+
+  <main class="admin-main">
+
+    <!-- PRODUCTS -->
+    <section class="tabpanel active" id="tab-products">
+      <div id="publish-banner" class="notice hide" style="margin-bottom:14px;display:flex;gap:12px;align-items:center;flex-wrap:wrap;">
+        <span><b>Unpublished changes.</b> Customers on the website can't see your edits until you publish them.</span>
+        <button class="btn small" type="button" id="publish-now-top">Publish to website</button>
+      </div>
+      <div class="admin-topbar">
+        <h1>Products</h1>
+        <div class="toolbar">
+          <input type="search" id="prod-search" placeholder="Search items…" style="padding:6px 10px;border:1px solid var(--line);border-radius:14px;">
+          <select id="cat-filter">
+            <option value="fish">Fish Market</option>
+            <option value="meat">Mutton &amp; Chicken</option>
+            <option value="grocery">Bengali Grocery</option>
+            <option value="vegetables">Vegetables</option>
+            <option value="sweets">Bengali Sweets</option>
+            <option value="pooja">Puja Items</option>
+            <option value="achar">Achar &amp; Hajmi</option>
+          </select>
+          <button class="btn secondary small" id="export-products-btn">Export to Excel</button>
+          <label class="btn secondary small" style="cursor:pointer;">Import from Excel
+            <input type="file" id="import-products-input" accept=".xlsx,.xls" style="display:none;">
+          </label>
+        </div>
+      </div>
+
+      <div class="card">
+        <table class="admin-table" id="products-table">
+          <thead><tr><th>Photo</th><th>Item</th><th>Unit</th><th title="Smallest quantity a customer can order; also the +/- step. 0.25 = 250 g">Min qty</th><th>Price ₹</th><th>Stock</th><th></th></tr></thead>
+          <tbody id="products-tbody"></tbody>
+        </table>
+      </div>
+
+      <div class="card">
+        <h3 style="margin-bottom:14px;">Add new item</h3>
+        <form id="add-product-form" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;align-items:end;">
+          <div><label style="font-size:.8rem;">Category</label>
+            <select id="np-category">
+              <option value="fish">Fish</option>
+              <option value="meat">Mutton &amp; Chicken</option>
+              <option value="grocery">Grocery</option>
+              <option value="vegetables">Vegetables</option>
+              <option value="sweets">Sweets</option>
+              <option value="pooja">Puja Items</option>
+              <option value="achar">Achar &amp; Hajmi</option>
+            </select>
+          </div>
+          <div><label style="font-size:.8rem;">Name</label><input type="text" id="np-name" required></div>
+          <div><label style="font-size:.8rem;">Unit (e.g. kg, piece)</label><input type="text" id="np-unit" value="kg" required></div>
+          <div><label style="font-size:.8rem;">Minimum quantity (0.25 = 250 g)</label><input type="number" step="0.05" min="0.05" id="np-step" value="0.25" required></div>
+          <div><label style="font-size:.8rem;">Price ₹ (per 1 Kg or per unit)</label><input type="number" step="0.01" id="np-price" required></div>
+          <div><label style="font-size:.8rem;">Photo</label><input type="file" id="np-image" accept="image/*"></div>
+          <div><button class="btn" type="submit">Add item</button></div>
+        </form>
+      </div>
+    </section>
+
+    <!-- TODAY'S ORDERS -->
+    <section class="tabpanel" id="tab-orders">
+      <div class="admin-topbar"><h1>Today's orders</h1>
+        <button class="btn secondary small" id="export-today-btn">Export today to Excel</button>
+      </div>
+      <div class="stat-row" id="today-stats"></div>
+      <p class="notice info" style="margin-bottom:14px;font-size:.85rem;">Orders are saved in the browser they were placed in, so this list shows orders placed on <b>this device</b>. Orders from customers' own phones reach you on <b>WhatsApp</b>.</p>
+      <div class="card">
+        <table class="admin-table">
+          <thead><tr><th>Order</th><th>Customer</th><th>Items</th><th>Total</th><th>Status</th><th>WhatsApp</th></tr></thead>
+          <tbody id="today-orders-tbody"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ORDER HISTORY -->
+    <section class="tabpanel" id="tab-history">
+      <div class="admin-topbar"><h1>Order history</h1>
+        <div class="toolbar">
+          <input type="month" id="history-month">
+          <button class="btn secondary small" id="export-history-btn">Export month to Excel</button>
+          <button class="btn secondary small" id="export-all-btn">Export all orders</button>
+        </div>
+      </div>
+      <div class="stat-row" id="month-stats"></div>
+      <div class="card">
+        <table class="admin-table">
+          <thead><tr><th>Order</th><th>Date</th><th>Customer</th><th>Items</th><th>Total</th><th>Status</th></tr></thead>
+          <tbody id="history-tbody"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- SETTINGS -->
+    <section class="tabpanel" id="tab-settings">
+      <div class="admin-topbar"><h1>Settings</h1></div>
+      <div class="card">
+        <form class="stack" id="settings-form">
+          <div><label>Store name</label><input type="text" id="s-name"></div>
+          <div><label>Store WhatsApp number (with country code, digits only)</label><input type="text" id="s-whatsapp"></div>
+          <div><label>Address</label><textarea id="s-address" rows="2"></textarea></div>
+          <div><label>Open hours</label><input type="text" id="s-hours"></div>
+          <button class="btn" type="submit">Save settings</button>
+        </form>
+      </div>
+      <div class="card">
+        <h3 style="margin-bottom:10px;">Change admin password</h3>
+        <form class="stack" id="password-form">
+          <div><label>New password</label><input type="password" id="new-pass" required></div>
+          <button class="btn secondary" type="submit">Update password</button>
+        </form>
+      </div>
+      <div class="card">
+        <h3 style="margin-bottom:10px;">Broadcast a WhatsApp message</h3>
+        <p style="font-size:.85rem;color:var(--ink-soft);margin-bottom:10px;">Opens WhatsApp to a number of your choice with a message you type — useful for telling a regular customer about today's rate.</p>
+        <form class="stack" id="broadcast-form">
+          <div><label>Customer WhatsApp number</label><input type="text" id="b-number" placeholder="91XXXXXXXXXX" required></div>
+          <div><label>Message</label><textarea id="b-message" rows="3" required></textarea></div>
+          <button class="btn whatsapp" type="submit">Open in WhatsApp</button>
+        </form>
+      </div>
+      <div class="card" id="publish-card">
+        <h3 style="margin-bottom:6px;">Publish to website (GitHub)</h3>
+        <p style="font-size:.85rem;color:var(--ink-soft);margin-bottom:10px;">Edits you make here are saved in <b>this browser only</b>. <b>Publish</b> writes your products, prices and shop details into your GitHub repository (<code>data/catalog.js</code>), and then every visitor sees them (usually within 1–10 minutes while GitHub Pages refreshes).</p>
+        <div id="publish-status" class="notice" style="margin-bottom:12px;font-size:.85rem;"></div>
+        <form class="stack" id="gh-form" style="max-width:520px">
+          <div><label>GitHub username (or organisation)</label><input type="text" id="gh-owner" placeholder="e.g. kolkatafmm"></div>
+          <div><label>Repository name</label><input type="text" id="gh-repo" placeholder="e.g. kolkata-fish-mutton-and-more"></div>
+          <div><label>Branch</label><input type="text" id="gh-branch" value="main"></div>
+          <div><label>Path of the catalog file in the repo <small>(if your index.html is inside a folder, include it, e.g. <code>site/data/catalog.js</code>)</small></label><input type="text" id="gh-path" value="data/catalog.js"></div>
+          <div><label>Access token (fine-grained, this repo only, <i>Contents: Read and write</i>)</label><input type="password" id="gh-token" autocomplete="off"></div>
+          <button class="btn secondary" type="submit">Save connection</button>
+        </form>
+        <p style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap;">
+          <button class="btn" type="button" id="publish-now">Publish now</button>
+          <button class="btn secondary" type="button" id="download-catalog">Download catalog.js (upload it to GitHub by hand)</button>
+          <button class="btn secondary danger-o" type="button" id="discard-local" style="color:#A31621;border-color:#A31621">Discard my unpublished changes</button>
+        </p>
+        <details style="margin-top:10px;font-size:.85rem;color:var(--ink-soft);">
+          <summary>How to create the access token (one time)</summary>
+          <ol style="margin:8px 0 0 18px;line-height:1.6">
+            <li>On github.com open <b>Settings → Developer settings → Personal access tokens → Fine-grained tokens → Generate new token</b>.</li>
+            <li>Repository access: <b>Only select repositories</b> → choose this site's repository.</li>
+            <li>Permissions → Repository permissions → <b>Contents: Read and write</b>. Nothing else.</li>
+            <li>Generate, copy the token, paste it above, and press <b>Save connection</b>. Keep it secret — anyone with it can change your repository.</li>
+          </ol>
+        </details>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<script src="data/catalog.js"></script>
+<script src="js/store.js"></script>
+<script src="js/whatsapp.js"></script>
+<script src="js/main.js"></script>
+<script src="js/admin.js"></script>
+<script>
+if("serviceWorker" in navigator){
+  window.addEventListener("load", ()=>{
+    navigator.serviceWorker.register("service-worker.js").catch(()=>{});
+  });
+}
+</script>
+</body>
+</html>
